@@ -72,7 +72,9 @@ static NSString*observeArray = @"muDataArray";
         [UIView animateWithDuration:0.5 animations:^{
             
             self.bottomEditView.alpha = 0.0;
+            
         }];
+        [[self.model mutableArrayValueForKey:observeArray] removeAllObjects];
 
     }
 }
@@ -204,7 +206,7 @@ static NSString*observeArray = @"muDataArray";
 }
 
 
-
+#pragma mark - 删除事件
 
 /**
  批量删除数据
@@ -212,6 +214,9 @@ static NSString*observeArray = @"muDataArray";
  @param tap 点击手势
  */
 -(void)deleteData:(UITapGestureRecognizer*)tap{
+    if([self.model mutableArrayValueForKey:observeArray].count == 0){
+        return;
+    }
     UIAlertController*alert = [UIAlertController alertControllerWithTitle:@"是否删除？" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     UIAlertAction*sure = [UIAlertAction actionWithTitle:@"删除" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         
