@@ -47,7 +47,8 @@ static NSString*tableName = @"STUDENT";
         NSString*userId = [set stringForColumn:@"ID"];
         [arr addObject:@{@"ID":userId,@"NAME":name,@"AGE":age,@"ADDRESS":address}];
     }
-    //arr针对名字排序
+    //arr根据数组中字典的某个键排序
+    //由于此时age字段是NSString类型，直接比较会出现bug，例如@"12"会比@"3"小，因为字符串比较时从前往后逐一对比，由于1<3,所以判定@"12"总体比3小
 //    [arr sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"AGE" ascending:YES]]];
     [arr sortWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         if([obj1[@"AGE"] intValue] < [obj2[@"AGE"] intValue]){
@@ -164,6 +165,7 @@ static NSString*tableName = @"STUDENT";
         _createDBButton.layer.cornerRadius = 5.0;
         [_createDBButton setTitle:@"添加数据" forState:UIControlStateNormal];
 //        _createDBButton.backgroundColor = RGB(22, 102, 248, 1.0);
+        [_createDBButton setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];
         [_createDBButton setTitleColor:RGB(22, 102, 248, 1.0) forState:UIControlStateNormal];
     }
     

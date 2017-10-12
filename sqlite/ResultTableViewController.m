@@ -8,7 +8,13 @@
 
 #import "ResultTableViewController.h"
 
+static NSString*observeArray = @"muDataArray";
+
 @interface ResultTableViewController ()
+
+@property(nonatomic,strong)NSMutableArray*selectedArray;
+@property(nonatomic,strong)UILabel*bottomEditView;//用来在编辑状态下批量删除的view
+@property(nonatomic,strong)KVOModel*model;
 
 @end
 
@@ -22,16 +28,64 @@
     // self.clearsSelectionOnViewWillAppear = NO;
     
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    
 //    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     self.tableView.tableFooterView = [UIView new];
+//    self.tableView.allowsMultipleSelection = YES;
+    self.tableView.allowsMultipleSelectionDuringEditing = YES;
+     [self.editButtonItem setTitle:@"删除"];
+    
+    [self.model addObserver:self forKeyPath:observeArray options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil ];
     
 }
 
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context{
+    if([keyPath isEqualToString:observeArray]){
+        
+        if(self.model.muDataArray.count == 0){
+            self.bottomEditView.backgroundColor = [UIColor lightGrayColor];
+            self.bottomEditView.textColor = [UIColor grayColor];
+        }else{
+            self.bottomEditView.backgroundColor =RGB(255,51,102,1.0);
+            
+            self.bottomEditView.textColor = [UIColor whiteColor];
+        }
+        
+    }else{
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
+-(void)setEditing:(BOOL)editing animated:(BOOL)animated{
+    [super setEditing:editing animated:animated];
+    if(self.editing){
+        //所有编辑状态的配置
+ 
+        [self.editButtonItem setTitle:@"完成"];
+   
+        self.bottomEditView.alpha = 1.0;
+    }else{
+
+        [self.editButtonItem setTitle:@"删除"];
+ 
+        [UIView animateWithDuration:0.5 animations:^{
+            
+            self.bottomEditView.alpha = 0.0;
+        }];
+
+    }
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+-(UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return UITableViewCellEditingStyleDelete | UITableViewCellEditingStyleInsert;
+}
+
+
 
 #pragma mark - Table view data source
 
@@ -56,16 +110,38 @@
     NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
     cell.textLabel.text = [NSString stringWithFormat:@"【%@岁】%@",userInfo[@"AGE"],userInfo[@"NAME"]];
     cell.detailTextLabel.text = userInfo[@"ADDRESS"];
+    cell.selectionStyle = UITableViewCellSelectionStyleGray;
      
     // Configure the cell...
     
     return cell;
 }
 
+#pragma mark - 待删除数据发生变化
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
-    
     NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
+    
+    if(tableView.isEditing){
+        [[self.model mutableArrayValueForKey:observeArray] addObject:userInfo];
+        NSLog(@"已选中的数据:%@",self.model.muDataArray);
+        
+    }else{
+        [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+        [self modifyCellData:tableView indexPath:indexPath userInfo:userInfo];
+        
+    }
+    
+}
+-(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath{
+    NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
+    
+    if(tableView.isEditing){
+        [[self.model mutableArrayValueForKey:observeArray] removeObject:userInfo];
+        NSLog(@"取消后，已选中的数据:%@",self.model.muDataArray);
+        
+    }
+}
+-(void)modifyCellData:(UITableView*)tableView indexPath:(NSIndexPath*)indexPath userInfo:(NSDictionary*)userInfo{
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"修改信息" message:@"各项信息为必填项" preferredStyle:UIAlertControllerStyleAlert];
     
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
@@ -75,11 +151,11 @@
     }];
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.placeholder = @"AGE INT";
-         textField.text = userInfo[@"AGE"];
+        textField.text = userInfo[@"AGE"];
     }];
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.placeholder = @"ADDRESS TEXT";
-         textField.text = userInfo[@"ADDRESS"];
+        textField.text = userInfo[@"ADDRESS"];
         
     }];
     
@@ -108,7 +184,7 @@
             [self.view endEditing:YES];
             //            [self alert:@"插入成功"];
             NSLog(@"修改数据成功");
-             [self.dataSourceArray replaceObjectAtIndex:indexPath.row withObject:@{@"ID":userInfo[@"ID"],@"NAME":name,@"AGE":age,@"ADDRESS":address}];
+            [self.dataSourceArray replaceObjectAtIndex:indexPath.row withObject:@{@"ID":userInfo[@"ID"],@"NAME":name,@"AGE":age,@"ADDRESS":address}];
             [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         }
     }];
@@ -129,6 +205,26 @@
 
 
 
+
+/**
+ 批量删除数据
+
+ @param tap 点击手势
+ */
+-(void)deleteData:(UITapGestureRecognizer*)tap{
+    UIAlertController*alert = [UIAlertController alertControllerWithTitle:@"是否删除？" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertAction*sure = [UIAlertAction actionWithTitle:@"删除" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        
+        [[self.model mutableArrayValueForKey:observeArray] removeObjectsInArray:self.selectedArray];
+        [self.tableView reloadData];
+        
+    }];
+    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:sure];
+    [alert addAction:cancel];
+    [self presentViewController:alert animated:YES completion:nil] ;
+}
+
 // Override to support editing the table view.
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
@@ -146,8 +242,44 @@
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
     }   
 }
+-(NSMutableArray *)selectedArray{
+    if(!_selectedArray){
+        _selectedArray = [NSMutableArray new];
+    }
+    return _selectedArray;
+}
 
+-(KVOModel *)model{
+    if(!_model){
+        _model = [[KVOModel alloc]init];
+    }
+    return _model;
+}
+-(UILabel *)bottomEditView{
+    if(!_bottomEditView){
+        _bottomEditView = [UILabel new];
+       [self.tableView addSubview:_bottomEditView];
+        [_bottomEditView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.width.mas_equalTo(self.tableView);
+            make.centerX.mas_equalTo(self.tableView);
+            make.bottom.mas_equalTo(self.mas_bottomLayoutGuideTop);
+            make.height.mas_equalTo(49);
+        }];
+        _bottomEditView.backgroundColor = [UIColor lightGrayColor];
+        _bottomEditView.text = @"批量删除";
+        _bottomEditView.textColor = [UIColor grayColor];
+        _bottomEditView.textAlignment = NSTextAlignmentCenter;
+        _bottomEditView.userInteractionEnabled = YES;
+        UITapGestureRecognizer*tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(deleteData:)];
+        [_bottomEditView addGestureRecognizer:tap];
+        
+    }
+    return _bottomEditView;
+}
 
+-(void)dealloc{
+    [self.model removeObserver:self forKeyPath:observeArray context:nil];
+}
 /*
 // Override to support rearranging the table view.
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
