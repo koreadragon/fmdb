@@ -109,8 +109,8 @@ static NSString*observeArray = @"muDataArray";
     NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
     cell.textLabel.text = [NSString stringWithFormat:@"【%@岁】%@",userInfo[@"AGE"],userInfo[@"NAME"]];
     cell.detailTextLabel.text = userInfo[@"ADDRESS"];
-    cell.selectionStyle = UITableViewCellSelectionStyleGray;
-     
+//    cell.selectionStyle = UITableViewCellSelectionStyleGray;
+    
     // Configure the cell...
     
     return cell;
