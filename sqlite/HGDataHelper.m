@@ -54,6 +54,33 @@
 //    [self.db close];
     return removeResult;
 }
+-(BOOL)removeDataWithIDs:(NSArray *)IDsArray tableName:(NSString *)tableName{
+    [self.db beginTransaction];
+    BOOL isRollBack = NO;
+    BOOL deleteResult = NO;
+    
+    @try{
+        for (NSString*ID in IDsArray) {
+            NSString*sql = [NSString stringWithFormat:@"DELETE FROM %@ WHERE ID = %@",tableName,ID];
+            deleteResult = [self.db executeUpdate:sql];
+        }
+    }
+    @catch(NSException *exception){
+        isRollBack = YES;
+        
+        [self.db rollback];
+    }
+    
+    @finally{
+        if(!isRollBack){
+            [self.db commit];
+        }
+    }
+    
+    return deleteResult;
+    
+    
+}
 
 -(BOOL)dropTable:(NSString*)tableName{
    return  [self.db executeUpdate:@"DROP TABLE %@ "];
@@ -76,6 +103,44 @@
 }
 
 
-
+- (void)insertData:(int)fromIndex useTransaction:(BOOL)useTransaction tableName:(NSString*)tableName
+{
+//    [self.db open];
+    if (useTransaction) {
+        [self.db beginTransaction];
+        BOOL isRollBack = NO;
+        @try {
+            for (int i = fromIndex; i<500+fromIndex; i++) {
+                NSString *nId = [NSString stringWithFormat:@"%d",i];
+                NSString *strName = [[NSString alloc] initWithFormat:@"student_%d",i];
+                NSString *sql = [NSString stringWithFormat:@"INSERT INTO %@ (id,student_name) VALUES (?,?)",tableName];
+                BOOL a = [self.db executeUpdate:sql,nId,strName];
+                if (!a) {
+                    NSLog(@"插入失败1");
+                }
+            }
+        }
+        @catch (NSException *exception) {
+            isRollBack = YES;
+            [self.db rollback];
+        }
+        @finally {
+            if (!isRollBack) {
+                [self.db commit];
+            }
+        }
+    }else{
+        for (int i = fromIndex; i<500+fromIndex; i++) {
+            NSString *nId = [NSString stringWithFormat:@"%d",i];
+            NSString *strName = [[NSString alloc] initWithFormat:@"student_%d",i];
+             NSString *sql = [NSString stringWithFormat:@"INSERT INTO %@ (id,student_name) VALUES (?,?)",tableName];
+            BOOL a = [self.db executeUpdate:sql,nId,strName];
+            if (!a) {
+                NSLog(@"插入失败2");
+            }
+        }
+    }
+//    [self.db close];
+}
 
 @end

@@ -24,15 +24,12 @@ static NSString*observeArray = @"muDataArray";
     [super viewDidLoad];
     
     self.navigationItem.title = @"详细数据";
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
+ 
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
     
 //    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     self.tableView.tableFooterView = [UIView new];
-//    self.tableView.allowsMultipleSelection = YES;
+    self.tableView.allowsMultipleSelection = YES;
     self.tableView.allowsMultipleSelectionDuringEditing = YES;
      [self.editButtonItem setTitle:@"删除"];
     
@@ -220,9 +217,19 @@ static NSString*observeArray = @"muDataArray";
     UIAlertController*alert = [UIAlertController alertControllerWithTitle:@"是否删除？" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     UIAlertAction*sure = [UIAlertAction actionWithTitle:@"删除" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         
-        [[self.model mutableArrayValueForKey:observeArray] removeObjectsInArray:self.selectedArray];
-        [self.tableView reloadData];
         
+        NSMutableArray*idsArray = [NSMutableArray new];
+        for (NSDictionary*dic in [self.model mutableArrayValueForKey:observeArray]) {
+            NSString*ID = dic[@"ID"];
+            [idsArray addObject:ID];
+        }
+        //需要删除数据库中的数据
+       BOOL res =  [[HGDataHelper shared]removeDataWithIDs:idsArray tableName:_tableName];
+        if(res){
+            [self.dataSourceArray removeObjectsInArray:[self.model mutableArrayValueForKey:observeArray]];
+            [[self.model mutableArrayValueForKey:observeArray] removeAllObjects];
+            [self.tableView reloadData];
+        }
     }];
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:sure];

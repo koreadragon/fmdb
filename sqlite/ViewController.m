@@ -32,8 +32,15 @@ static NSString*tableName = @"STUDENT";
     [self.pushButton  addTarget:self action:@selector(seeData) forControlEvents:UIControlEventTouchUpInside];
     
     [self createTable];
+    
+  
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+//      [KVOModel test];
+    [[HGDataHelper shared].db executeUpdate:@"DROP VIEW HERO"];
+}
 
 
 -(void)seeData{

@@ -60,10 +60,17 @@
 -(BOOL)createTable:(NSString*)tableName;
 
 
+/**
+ 批量删除数据
+
+ @param IDsArray 待删除数据id数组
+ @param tableName 需要删除数据的表名
+ @return 删除是否成功
+ */
+-(BOOL)removeDataWithIDs:(NSArray*)IDsArray tableName:(NSString*)tableName;
 
 
-
-
+- (void)insertData:(int)fromIndex useTransaction:(BOOL)useTransaction tableName:(NSString*)tableName;
 
 
 
