@@ -23,7 +23,9 @@
     
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
+//    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
+    self.tableView.tableFooterView = [UIView new];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -40,20 +42,85 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 //#warning Incomplete implementation, return the number of rows
-    return self.dataSource.count;
+ 
+    return self.dataSourceArray.count;
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"reuseIdentifier" forIndexPath:indexPath];
-    cell.textLabel.text = self.dataSource[indexPath.row];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"reuseIdentifier"];
+    if(!cell){
+        cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"reuseIdentifier"];
+    }
+    
+    NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
+    cell.textLabel.text = [NSString stringWithFormat:@"【%@岁】%@",userInfo[@"AGE"],userInfo[@"NAME"]];
+    cell.detailTextLabel.text = userInfo[@"ADDRESS"];
+     
     // Configure the cell...
     
     return cell;
 }
 
-
-
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    NSDictionary*userInfo = self.dataSourceArray[indexPath.row];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"修改信息" message:@"各项信息为必填项" preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        
+        textField.placeholder = @"NAME TEXT";
+        textField.text = userInfo[@"NAME"];
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"AGE INT";
+         textField.text = userInfo[@"AGE"];
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"ADDRESS TEXT";
+         textField.text = userInfo[@"ADDRESS"];
+        
+    }];
+    
+    UIAlertAction*sure = [UIAlertAction actionWithTitle:@"修改" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSArray* array = alert.textFields;
+        NSString*name = ((UITextField*)array[0]).text;
+        NSString*age = ((UITextField*)array[1]).text;
+        NSString*address = ((UITextField*)array[2]).text;
+        
+        if(name.length == 0){
+            [self alert:@"请填写name"];
+            return;
+        }
+        if(age.length == 0){
+            [self alert:@"请填写age"];
+            return;
+        }
+        if(address.length == 0){
+            [self alert:@"请填写address"];
+            return;
+        }
+        
+        
+        BOOL re =   [[HGDataHelper shared].db executeUpdate:[NSString stringWithFormat:@"UPDATE %@ SET NAME = '%@',AGE = %@,ADDRESS = '%@' WHERE ID = %@",_tableName,name,age,address,userInfo[@"ID"]]];
+        if(re){
+            [self.view endEditing:YES];
+            //            [self alert:@"插入成功"];
+            NSLog(@"修改数据成功");
+             [self.dataSourceArray replaceObjectAtIndex:indexPath.row withObject:@{@"ID":userInfo[@"ID"],@"NAME":name,@"AGE":age,@"ADDRESS":address}];
+            [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
+    }];
+    UIAlertAction*cancel = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:sure];
+    [alert addAction:cancel];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+-(void)alert:(NSString*)title{
+    UIAlertView*view = [[UIAlertView alloc] initWithTitle:title message:nil delegate:nil cancelButtonTitle:nil otherButtonTitles:@"好的", nil];
+    [view show];
+}
 // Override to support conditional editing of the table view.
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     // Return NO if you do not want the specified item to be editable.
@@ -66,7 +133,15 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        NSDictionary*removeOBJ = self.dataSourceArray[indexPath.row];
+        NSString*removeID = removeOBJ[@"ID"];
+       BOOL delete =  [[HGDataHelper shared] removeData:removeID tableName:_tableName];
+        if(delete){
+            
+            [self.dataSourceArray removeObject:self.dataSourceArray[indexPath.row]];
+            [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        }
+        
     } else if (editingStyle == UITableViewCellEditingStyleInsert) {
         // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
     }   

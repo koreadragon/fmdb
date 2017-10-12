@@ -9,11 +9,14 @@
 #import "ViewController.h"
 #import "ResultTableViewController.h"
 
+static NSString*tableName = @"STUDENT";
+
 @interface ViewController ()
 
-@property(nonatomic,strong)FMDatabase*db;
+
 @property(nonatomic,strong)UIButton*createDBButton;
 @property(nonatomic,strong)UITextField*databaseNameField;
+@property(nonatomic,strong)UIButton*pushButton;
 
 @end
 
@@ -23,68 +26,84 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
    [ self.createDBButton addTarget:self action:@selector(createStore:) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:self.databaseNameField];
+//    [self.view addSubview:self.databaseNameField];
     self.navigationItem.title = @"数据库demo";
-    [self addRightButton];
+ 
+    [self.pushButton  addTarget:self action:@selector(seeData) forControlEvents:UIControlEventTouchUpInside];
     
-    [self createDB];
+    [self createTable];
 }
 
--(void)addRightButton{
-    UIBarButtonItem*right = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(pushToShowResult)];
-    self.navigationItem.rightBarButtonItem = right;
-}
 
--(void)pushToShowResult{
+
+-(void)seeData{
     //首先读取数据
-    FMResultSet *set = [self.db executeQuery:@"SELECT * FROM HAN"];
+    FMResultSet *set = [[HGDataHelper shared] readDataFromTable:tableName];
     NSMutableArray*arr = [NSMutableArray new];
     while ([set next]) {
         NSString*name = [set stringForColumn:@"NAME"];
-        [arr addObject:name];
+        NSString*age = [set stringForColumn:@"AGE"];
+        NSString*address = [set stringForColumn:@"ADDRESS"];
+        NSString*userId = [set stringForColumn:@"ID"];
+        [arr addObject:@{@"ID":userId,@"NAME":name,@"AGE":age,@"ADDRESS":address}];
     }
-    
+    //arr针对名字排序
+//    [arr sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"AGE" ascending:YES]]];
+    [arr sortWithOptions:NSSortConcurrent usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        if([obj1[@"AGE"] intValue] < [obj2[@"AGE"] intValue]){
+            return NSOrderedAscending;
+        }else if ([obj1[@"AGE"] intValue] > [obj2[@"AGE"] intValue]){
+            return NSOrderedDescending;
+        }else{
+            return NSOrderedSame;
+        }
+        
+    }];
     ResultTableViewController*res = [ResultTableViewController new];
-    res.dataSource = arr;
+    res.dataSourceArray = arr;
+    res.tableName = tableName;
     [self.navigationController pushViewController:res animated:YES];
 }
 -(void)createStore:(UIButton*)sender{
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"新增" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = @"id int";
-        
-    }];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"新增英雄信息" message:@"各项信息为必填项" preferredStyle:UIAlertControllerStyleAlert];
+    
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         
-        textField.placeholder = @"name text";
+        textField.placeholder = @"NAME TEXT";
     }];
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = @"age int";
+        textField.placeholder = @"AGE INT";
+    }];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"ADDRESS TEXT";
+        
     }];
 
     UIAlertAction*sure = [UIAlertAction actionWithTitle:@"添加" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         NSArray* array = alert.textFields;
-        NSString*userId = ((UITextField*)array[0]).text;
-        NSString*name = ((UITextField*)array[1]).text;
-        NSString*age = ((UITextField*)array[2]).text;
+        NSString*name = ((UITextField*)array[0]).text;
+        NSString*age = ((UITextField*)array[1]).text;
+        NSString*address = ((UITextField*)array[2]).text;
         
-        if(userId.length == 0){
-            [self alert:@"请填写id"];
-            return;
-        }
         if(name.length == 0){
             [self alert:@"请填写name"];
-             return;
+            return;
         }
         if(age.length == 0){
             [self alert:@"请填写age"];
              return;
         }
+        if(address.length == 0){
+            [self alert:@"请填写address"];
+             return;
+        }
         
         
-      BOOL re =   [self.db executeUpdate:@"INSERT INTO HAN VALUES (?,?,?)",userId,name,age];
+      BOOL re =   [[HGDataHelper shared].db executeUpdate:[NSString stringWithFormat:@"INSERT INTO %@ (NAME,AGE,ADDRESS) VALUES (?,?,?)",tableName],name,age,address];
         if(re){
-            [self alert:@"插入成功"];
+            [self.view endEditing:YES];
+//            [self alert:@"插入成功"];
+            NSLog(@"插入数据成功");
         }
     }];
     UIAlertAction*cancel = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
@@ -94,45 +113,33 @@
     
 }
 
--(void)createDB{
-    NSString*directory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)lastObject];
-    //
-    //    if(self.databaseNameField.text.length == 0){
-    //         [self alert:@"请输入数据库名称"];
-    //        return;
-    //    }
-    //    NSString*userInput = self.databaseNameField.text;
-    //    if(![userInput hasSuffix:@"db"]){
-    //        userInput = [userInput stringByAppendingString:@".db"];
-    //    }
-    
-    NSString*filePath = [directory stringByAppendingPathComponent:@"formal.db"];
-    NSLog(@"数据库路径:%@",filePath);
-    self.db = [FMDatabase databaseWithPath:filePath];
-    if([self.db open]){
+-(void)createTable{
+ 
+    if([[HGDataHelper shared].db open]){
         NSLog(@"数据库打开成功!");
-//        [self alert:@"数据库打开成功!"];
+ 
         //创建表
-     BOOL res = [self.db executeUpdate:@"CREATE TABLE HAN (ID INTEGER PRIMARY KEY AUTOINCREMENT,NAME TEXT NOT NULL,AGE INT NOT NULL)"];
+        BOOL res =  [[HGDataHelper shared].db executeUpdate:[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@  (ID INTEGER PRIMARY KEY AUTOINCREMENT,NAME TEXT NOT NULL,AGE INT NOT NULL,ADDRESS TEXT NOT NULL)",tableName]];
         if(res){
-//            [self alert:@"创建表成功"];
+ 
             NSLog(@"创建表成功");
         }else{
             NSLog(@"创建表失败");
         }
     }else{
         NSLog(@"数据库打开失败!");
-//        [self alert:@"数据库打开失败!"];
+ 
     }
     
    
 }
 
 -(void)dealloc{
-    if([self.db close]){
-        //        [self alert:@"数据库关闭"];
+ 
+    if([[HGDataHelper shared]closeDB]){
+        NSLog(@"数据库关闭成功...");
     }else{
-        //        [self alert:@"数据库关闭失败"];
+        NSLog(@"数据库关闭失败!");
     }
 }
 
@@ -147,26 +154,50 @@
        [self.view addSubview:_createDBButton];
         [_createDBButton mas_makeConstraints:^(MASConstraintMaker *make) {
             
-            make.top.mas_equalTo(self.databaseNameField.mas_bottom).with.offset(20);
-            make.width.mas_equalTo(self.view);
+//            make.top.mas_equalTo(self.mas_topLayoutGuideBottom).with.offset(64);;
+            make.width.mas_equalTo(self.view).multipliedBy(0.5);
             make.height.mas_equalTo(45);
             make.centerX.mas_equalTo(self.view);
+            make.centerY.mas_equalTo(self.view);
             
         }];
+        _createDBButton.layer.cornerRadius = 5.0;
         [_createDBButton setTitle:@"添加数据" forState:UIControlStateNormal];
-        _createDBButton.backgroundColor = RGB(22, 102, 248, 1.0);
-        [_createDBButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+//        _createDBButton.backgroundColor = RGB(22, 102, 248, 1.0);
+        [_createDBButton setTitleColor:RGB(22, 102, 248, 1.0) forState:UIControlStateNormal];
     }
     
     
     return _createDBButton;
+}
+
+-(UIButton *)pushButton{
+    if(!_pushButton){
+        _pushButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [self.view addSubview:_pushButton];
+        [_pushButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            
+            make.bottom.mas_equalTo(self.mas_bottomLayoutGuideTop).with.offset(-64);;
+            make.width.mas_equalTo(self.view).with.offset(-10);
+            make.height.mas_equalTo(50);
+            make.centerX.mas_equalTo(self.view);
+            
+        }];
+        _pushButton.layer.cornerRadius = 3.0;
+        [_pushButton setTitle:@"查看数据" forState:UIControlStateNormal];
+        _pushButton.backgroundColor = RGB(236, 0, 6, 0.6);
+        [_pushButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    }
+    
+    
+    return _pushButton;
 }
 -(UITextField *)databaseNameField{
     if(!_databaseNameField){
         _databaseNameField = [UITextField new ];
        [self.view addSubview:_databaseNameField];
         [_databaseNameField mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.mas_equalTo(self.mas_topLayoutGuideBottom).with.offset(20);;
+            make.top.mas_equalTo(self.mas_topLayoutGuideBottom).with.offset(20);
           
             make.width.mas_equalTo(self.createDBButton);
             make.height.mas_equalTo(self.createDBButton);

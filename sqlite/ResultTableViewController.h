@@ -9,5 +9,6 @@
 #import <UIKit/UIKit.h>
 
 @interface ResultTableViewController : UITableViewController
-@property(nonatomic,strong)NSArray*dataSource;
+@property(nonatomic,strong)NSMutableArray*dataSourceArray;
+@property(nonatomic,copy)NSString*tableName;
 @end

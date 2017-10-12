@@ -19,6 +19,7 @@
 		3C182A111F8CB0FB00600FA8 /* sqliteTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C182A101F8CB0FB00600FA8 /* sqliteTests.m */; };
 		3C182A1C1F8CB0FB00600FA8 /* sqliteUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C182A1B1F8CB0FB00600FA8 /* sqliteUITests.m */; };
 		3C182A2E1F8CCCE800600FA8 /* ResultTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C182A2D1F8CCCE800600FA8 /* ResultTableViewController.m */; };
+		3C182A311F8E080300600FA8 /* HGDataHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C182A301F8E080300600FA8 /* HGDataHelper.m */; };
 		D26EB651588840240CF5BDA7 /* Pods_sqliteTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 965BF8D711F34643AAFF4C07 /* Pods_sqliteTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -62,6 +63,8 @@
 		3C182A2B1F8CB56B00600FA8 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
 		3C182A2C1F8CCCE700600FA8 /* ResultTableViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ResultTableViewController.h; sourceTree = "<group>"; };
 		3C182A2D1F8CCCE800600FA8 /* ResultTableViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ResultTableViewController.m; sourceTree = "<group>"; };
+		3C182A2F1F8E080300600FA8 /* HGDataHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HGDataHelper.h; sourceTree = "<group>"; };
+		3C182A301F8E080300600FA8 /* HGDataHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HGDataHelper.m; sourceTree = "<group>"; };
 		44FCD2FB5398470C51E094C5 /* Pods_sqlite.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_sqlite.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6958BC2E211A4E5192BB2C45 /* Pods-sqliteUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sqliteUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-sqliteUITests/Pods-sqliteUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		72E37CD5FCD51DA729E8A429 /* Pods-sqlite.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-sqlite.release.xcconfig"; path = "Pods/Target Support Files/Pods-sqlite/Pods-sqlite.release.xcconfig"; sourceTree = "<group>"; };
@@ -129,6 +132,8 @@
 				3C1829F51F8CB0FB00600FA8 /* AppDelegate.m */,
 				3C1829F71F8CB0FB00600FA8 /* ViewController.h */,
 				3C1829F81F8CB0FB00600FA8 /* ViewController.m */,
+				3C182A2F1F8E080300600FA8 /* HGDataHelper.h */,
+				3C182A301F8E080300600FA8 /* HGDataHelper.m */,
 				3C182A2C1F8CCCE700600FA8 /* ResultTableViewController.h */,
 				3C182A2D1F8CCCE800600FA8 /* ResultTableViewController.m */,
 				3C1829FA1F8CB0FB00600FA8 /* Main.storyboard */,
@@ -487,6 +492,7 @@
 			files = (
 				3C182A2E1F8CCCE800600FA8 /* ResultTableViewController.m in Sources */,
 				3C1829F91F8CB0FB00600FA8 /* ViewController.m in Sources */,
+				3C182A311F8E080300600FA8 /* HGDataHelper.m in Sources */,
 				3C1829F61F8CB0FB00600FA8 /* AppDelegate.m in Sources */,
 				3C182A071F8CB0FB00600FA8 /* main.m in Sources */,
 				3C1829FF1F8CB0FB00600FA8 /* sqlite.xcdatamodeld in Sources */,
